@@ -1,16 +1,21 @@
-// ウィンドウの色管理（ウィンドウ単位のみ）
+// ウィンドウの色管理（特徴ベース識別）
 class WindowColorManager {
   constructor() {
-    this.windowColors = new Map();
+    this.windowColors = new Map(); // 従来のwindowID → color
+    this.windowProfiles = new Map(); // windowID → ウィンドウ特徴
+    this.savedProfiles = new Map(); // 保存された特徴 → color
     this.detachedTabColors = new Map(); // デタッチ中のタブの色を一時保存
     this.loadStoredColors();
   }
 
   async loadStoredColors() {
     try {
-      const result = await chrome.storage.local.get(['windowColors']);
+      const result = await chrome.storage.local.get(['windowColors', 'savedProfiles']);
       if (result.windowColors) {
         this.windowColors = new Map(Object.entries(result.windowColors));
+      }
+      if (result.savedProfiles) {
+        this.savedProfiles = new Map(Object.entries(result.savedProfiles));
       }
     } catch (error) {
       console.log('色設定の読み込みエラー:', error);
@@ -20,7 +25,11 @@ class WindowColorManager {
   async saveColors() {
     try {
       const colorsObj = Object.fromEntries(this.windowColors);
-      await chrome.storage.local.set({ windowColors: colorsObj });
+      const profilesObj = Object.fromEntries(this.savedProfiles);
+      await chrome.storage.local.set({ 
+        windowColors: colorsObj,
+        savedProfiles: profilesObj
+      });
     } catch (error) {
       console.log('色設定の保存エラー:', error);
     }
@@ -28,7 +37,8 @@ class WindowColorManager {
 
   setWindowColor(windowId, color) {
     this.windowColors.set(windowId.toString(), color);
-    this.saveColors();
+    // 即座に特徴保存するのではなく、Chrome終了時にまとめて保存
+    this.saveColors(); // windowColors のみ保存
   }
 
   getWindowColor(windowId) {
@@ -36,12 +46,114 @@ class WindowColorManager {
   }
 
   removeWindowColor(windowId) {
+    // 保存されたプロファイルも削除
+    const profile = this.windowProfiles.get(windowId.toString());
+    if (profile) {
+      this.savedProfiles.delete(profile);
+      this.windowProfiles.delete(windowId.toString());
+    }
     this.windowColors.delete(windowId.toString());
     this.saveColors();
+  }
+
+  // ウィンドウ特徴を生成
+  async generateWindowProfile(windowId) {
+    try {
+      const window = await chrome.windows.get(windowId);
+      const tabs = await chrome.tabs.query({ windowId: windowId });
+      
+      // ウィンドウの特徴：位置、サイズ、タブ数
+      const profile = `${window.left}-${window.top}-${window.width}-${window.height}-${tabs.length}`;
+      return profile;
+    } catch (error) {
+      console.log('ウィンドウプロファイル生成エラー:', error);
+      return null;
+    }
+  }
+
+  // Chrome終了時に全ウィンドウの特徴を保存
+  async saveAllWindowProfiles() {
+    console.log('Chrome終了時に全ウィンドウ特徴を保存中...');
+    
+    try {
+      const windows = await chrome.windows.getAll();
+      
+      for (const window of windows) {
+        const windowId = window.id.toString();
+        const color = this.windowColors.get(windowId);
+        
+        if (color) {
+          // 色設定があるウィンドウのみ特徴を保存
+          const profile = await this.generateWindowProfile(window.id);
+          if (profile) {
+            this.savedProfiles.set(profile, color);
+            console.log(`ウィンドウ ${window.id} 特徴保存: ${profile} → ${color}`);
+          }
+        }
+      }
+      
+      // 保存された特徴をストレージに書き込み
+      const profilesObj = Object.fromEntries(this.savedProfiles);
+      await chrome.storage.local.set({ savedProfiles: profilesObj });
+      console.log('終了時特徴保存完了:', profilesObj);
+      
+    } catch (error) {
+      console.log('終了時特徴保存エラー:', error);
+    }
+  }
+
+  // ウィンドウが既存の特徴と一致するかチェック
+  async tryRestoreWindowColor(windowId) {
+    const profile = await this.generateWindowProfile(windowId);
+    if (profile && this.savedProfiles.has(profile)) {
+      const color = this.savedProfiles.get(profile);
+      this.windowColors.set(windowId.toString(), color);
+      this.windowProfiles.set(windowId.toString(), profile);
+      console.log(`ウィンドウ ${windowId} の色を復元: ${profile} → ${color}`);
+      return color;
+    }
+    return null;
   }
 }
 
 const colorManager = new WindowColorManager();
+
+// Chrome終了時に全ウィンドウ特徴を保存
+chrome.runtime.onSuspend.addListener(() => {
+  console.log('Chrome終了処理開始');
+  colorManager.saveAllWindowProfiles();
+});
+
+// Service Workerが終了する前にも保存
+chrome.runtime.onSuspendCanceled.addListener(() => {
+  console.log('終了処理がキャンセルされました');
+});
+
+// アラームで定期的に保存（フォールバック）
+chrome.alarms.create('saveProfiles', { periodInMinutes: 5 });
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'saveProfiles') {
+    console.log('定期的な特徴保存実行');
+    colorManager.saveAllWindowProfiles();
+  }
+});
+
+// 新しいウィンドウが作成されたとき
+chrome.windows.onCreated.addListener(async (window) => {
+  console.log(`新しいウィンドウ ${window.id} が作成された`);
+  // 少し待ってから色の復元を試行
+  setTimeout(async () => {
+    const restoredColor = await colorManager.tryRestoreWindowColor(window.id);
+    if (restoredColor) {
+      // そのウィンドウの全タブに色を適用
+      chrome.tabs.query({ windowId: window.id }, (tabs) => {
+        tabs.forEach(tab => {
+          applyColorToTab(tab.id, restoredColor);
+        });
+      });
+    }
+  }, 1000); // 1秒待ってウィンドウが完全に初期化されるのを待つ
+});
 
 // 新しいタブが作成されたとき
 chrome.tabs.onCreated.addListener(async (tab) => {
