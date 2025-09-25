@@ -16,7 +16,6 @@ class PopupManager {
     try {
       const window = await chrome.windows.getCurrent();
       this.currentWindowId = window.id;
-      document.getElementById('windowId').textContent = window.id;
     } catch (error) {
       console.error('ウィンドウ情報の取得エラー:', error);
     }
@@ -36,30 +35,14 @@ class PopupManager {
   }
 
   updateUI() {
-    const currentColorDisplay = document.getElementById('currentColorDisplay');
-    
-    if (this.currentColor) {
-      currentColorDisplay.style.backgroundColor = this.currentColor;
-      currentColorDisplay.textContent = '';
-      currentColorDisplay.title = this.currentColor;
-      
-      // 対応するカラーオプションを選択状態にする
-      document.querySelectorAll('.color-option').forEach(option => {
-        if (option.dataset.color === this.currentColor) {
-          option.classList.add('selected');
-        } else {
-          option.classList.remove('selected');
-        }
-      });
-    } else {
-      currentColorDisplay.style.backgroundColor = '#f8f9fa';
-      currentColorDisplay.textContent = '未設定';
-      currentColorDisplay.title = '';
-      
-      document.querySelectorAll('.color-option').forEach(option => {
+    // 対応するカラーオプションを選択状態にする
+    document.querySelectorAll('.color-option').forEach(option => {
+      if (option.dataset.color === this.currentColor) {
+        option.classList.add('selected');
+      } else {
         option.classList.remove('selected');
-      });
-    }
+      }
+    });
   }
 
   setupEventListeners() {

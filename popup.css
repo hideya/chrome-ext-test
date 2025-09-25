@@ -106,6 +106,32 @@ h3 {
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
+/* 色削除ボタンのスタイル */
+.remove-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #e74c3c;
+  user-select: none;
+}
+
+.remove-option:hover {
+  transform: scale(1.05);
+  border-color: #e74c3c;
+  background: #fff;
+  color: #c0392b;
+}
+
 .custom-color {
   display: flex;
   align-items: center;
