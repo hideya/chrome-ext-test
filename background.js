@@ -264,9 +264,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     
     sendResponse({ success: true });
-  } else if (message.action === 'getWindowColor') {
-    const color = colorManager.getWindowColor(message.windowId);
-    sendResponse({ color: color });
   } else if (message.action === 'getCurrentWindowEffectiveColor') {
     // 現在のアクティブタブの実効的な色を取得
     chrome.tabs.query({ active: true, windowId: message.windowId }, (tabs) => {

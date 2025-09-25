@@ -1,18 +1,18 @@
-// ページ読み込み時にウィンドウの色を確認して適用
-(async function() {
-  try {
-    // 現在のタブとウィンドウ情報を取得
-    const response = await chrome.runtime.sendMessage({
-      action: 'getCurrentWindowColor'
-    });
-    
-    if (response && response.color) {
-      setWindowColor(response.color);
+// メッセージリスナー（background.jsからの色適用要求を処理）
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'applyColor') {
+    setWindowColor(message.color);
+    sendResponse({ success: true });
+  } else if (message.action === 'removeColor') {
+    const existingBar = document.getElementById('window-color-bar');
+    if (existingBar) {
+      existingBar.remove();
     }
-  } catch (error) {
-    // エラーは無視
+    sendResponse({ success: true });
   }
-})();
+  
+  return true;
+});
 
 // ウィンドウに色を設定する関数
 function setWindowColor(color) {
@@ -33,19 +33,3 @@ function setWindowColor(color) {
     document.documentElement.appendChild(colorBar);
   }
 }
-
-// メッセージリスナー
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'applyColor') {
-    setWindowColor(message.color);
-    sendResponse({ success: true });
-  } else if (message.action === 'removeColor') {
-    const existingBar = document.getElementById('window-color-bar');
-    if (existingBar) {
-      existingBar.remove();
-    }
-    sendResponse({ success: true });
-  }
-  
-  return true;
-});

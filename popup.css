@@ -10,79 +10,10 @@ body {
   padding: 16px;
 }
 
-h1 {
-  font-size: 18px;
-  margin: 0 0 16px 0;
-  color: #2c3e50;
-  text-align: center;
-}
-
-h2 {
-  font-size: 14px;
-  margin: 0 0 8px 0;
-  color: #34495e;
-  border-bottom: 1px solid #ecf0f1;
-  padding-bottom: 4px;
-}
-
-h3 {
-  font-size: 13px;
-  margin: 16px 0 8px 0;
-  color: #34495e;
-}
-
-.current-window {
-  background: white;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.window-info {
-  font-size: 12px;
-  color: #7f8c8d;
-  margin: 4px 0;
-}
-
-.current-color {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.current-color label {
-  font-size: 12px;
-  color: #34495e;
-}
-
-.color-display {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 2px solid #ecf0f1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: #7f8c8d;
-  background: #f8f9fa;
-}
-
-.color-selection {
-  background: white;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
 .color-palette {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  margin-bottom: 12px;
 }
 
 .color-option {
@@ -106,7 +37,6 @@ h3 {
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-/* 色削除ボタンのスタイル */
 .remove-option {
   width: 40px;
   height: 40px;
@@ -130,63 +60,6 @@ h3 {
   border-color: #e74c3c;
   background: #fff;
   color: #c0392b;
-}
-
-.custom-color {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #ecf0f1;
-}
-
-.custom-color label {
-  font-size: 12px;
-  color: #34495e;
-}
-
-#customColor {
-  width: 40px;
-  height: 30px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.btn {
-  flex: 1;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.btn-remove {
-  background: #e74c3c;
-  color: white;
-}
-
-.btn-remove:hover {
-  background: #c0392b;
-}
-
-.info {
-  text-align: center;
-  margin-top: 8px;
-}
-
-.info p {
-  margin: 0;
-  color: #7f8c8d;
 }
 
 .status-message {
