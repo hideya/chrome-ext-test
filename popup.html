@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Window Color Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 ウィンドウカラー設定</h1>
+    
+    <div class="current-window">
+      <h2>現在のウィンドウ</h2>
+      <p class="window-info">ウィンドウ ID: <span id="windowId">-</span></p>
+      
+      <div class="current-color">
+        <label>現在の色:</label>
+        <div id="currentColorDisplay" class="color-display">未設定</div>
+      </div>
+    </div>
+
+    <div class="color-selection">
+      <h3>色を選択:</h3>
+      <div class="color-palette">
+        <div class="color-option" data-color="#FF6B6B" style="background: #FF6B6B;" title="レッド"></div>
+        <div class="color-option" data-color="#4ECDC4" style="background: #4ECDC4;" title="ターコイズ"></div>
+        <div class="color-option" data-color="#45B7D1" style="background: #45B7D1;" title="ブルー"></div>
+        <div class="color-option" data-color="#96CEB4" style="background: #96CEB4;" title="グリーン"></div>
+        <div class="color-option" data-color="#FFEAA7" style="background: #FFEAA7;" title="イエロー"></div>
+        <div class="color-option" data-color="#DDA0DD" style="background: #DDA0DD;" title="パープル"></div>
+        <div class="color-option" data-color="#F8C471" style="background: #F8C471;" title="オレンジ"></div>
+        <div class="color-option" data-color="#85C1E9" style="background: #85C1E9;" title="ライトブルー"></div>
+      </div>
+      
+      <div class="custom-color">
+        <label for="customColor">カスタム色:</label>
+        <input type="color" id="customColor" value="#FF6B6B">
+        <button id="applyCustom" class="btn btn-custom">適用</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="removeColor" class="btn btn-remove">色を削除</button>
+      <button id="previewMode" class="btn btn-preview">プレビューモード</button>
+    </div>
+
+    <div class="info">
+      <p><small>💡 このウィンドウの全てのタブに色が適用されます</small></p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

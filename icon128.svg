@@ -1,0 +1,24 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#44A08D;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="128" height="128" rx="20" fill="url(#bg)"/>
+  
+  <!-- ウィンドウのアウトライン -->
+  <rect x="20" y="30" width="88" height="68" rx="4" fill="none" stroke="white" stroke-width="3"/>
+  
+  <!-- カラーバー -->
+  <rect x="20" y="30" width="88" height="8" rx="2" fill="#FF6B6B"/>
+  <rect x="20" y="42" width="88" height="8" rx="2" fill="#45B7D1"/>
+  <rect x="20" y="54" width="88" height="8" rx="2" fill="#96CEB4"/>
+  
+  <!-- ウィンドウ内容を表現する線 -->
+  <rect x="28" y="70" width="50" height="2" rx="1" fill="rgba(255,255,255,0.7)"/>
+  <rect x="28" y="76" width="40" height="2" rx="1" fill="rgba(255,255,255,0.5)"/>
+  <rect x="28" y="82" width="60" height="2" rx="1" fill="rgba(255,255,255,0.6)"/>
+</svg>
