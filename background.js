@@ -2,18 +2,18 @@
 class WindowColorManager {
   constructor() {
     this.windowColors = new Map();
-    this.colorHistory = new Set(); // 使用した色の履歴
+    this.tabColors = new Map(); // タブごとの色情報を保持
     this.loadStoredColors();
   }
 
   async loadStoredColors() {
     try {
-      const result = await chrome.storage.local.get(['windowColors', 'colorHistory']);
+      const result = await chrome.storage.local.get(['windowColors', 'tabColors']);
       if (result.windowColors) {
         this.windowColors = new Map(Object.entries(result.windowColors));
       }
-      if (result.colorHistory) {
-        this.colorHistory = new Set(result.colorHistory);
+      if (result.tabColors) {
+        this.tabColors = new Map(Object.entries(result.tabColors));
       }
     } catch (error) {
       console.log('色設定の読み込みエラー:', error);
@@ -23,10 +23,10 @@ class WindowColorManager {
   async saveColors() {
     try {
       const colorsObj = Object.fromEntries(this.windowColors);
-      const historyArray = Array.from(this.colorHistory);
+      const tabColorsObj = Object.fromEntries(this.tabColors);
       await chrome.storage.local.set({ 
         windowColors: colorsObj,
-        colorHistory: historyArray
+        tabColors: tabColorsObj
       });
     } catch (error) {
       console.log('色設定の保存エラー:', error);
@@ -35,7 +35,6 @@ class WindowColorManager {
 
   setWindowColor(windowId, color) {
     this.windowColors.set(windowId.toString(), color);
-    this.colorHistory.add(color); // 色履歴に追加
     this.saveColors();
   }
 
@@ -48,13 +47,28 @@ class WindowColorManager {
     this.saveColors();
   }
 
-  getColorHistory() {
-    return Array.from(this.colorHistory);
+  // タブ色管理メソッド
+  setTabColor(tabId, color) {
+    this.tabColors.set(tabId.toString(), color);
+    this.saveColors();
   }
 
-  clearColorHistory() {
-    this.colorHistory.clear();
+  getTabColor(tabId) {
+    return this.tabColors.get(tabId.toString()) || null;
+  }
+
+  removeTabColor(tabId) {
+    this.tabColors.delete(tabId.toString());
     this.saveColors();
+  }
+
+  // タブに適用すべき色を決定（タブ色 > ウィンドウ色の優先順位）
+  getEffectiveTabColor(tabId, windowId) {
+    const tabColor = this.getTabColor(tabId);
+    if (tabColor) {
+      return tabColor;
+    }
+    return this.getWindowColor(windowId);
   }
 }
 
@@ -63,9 +77,11 @@ const colorManager = new WindowColorManager();
 // 新しいタブが作成されたとき
 chrome.tabs.onCreated.addListener(async (tab) => {
   if (tab.windowId) {
-    const color = colorManager.getWindowColor(tab.windowId);
+    const color = colorManager.getEffectiveTabColor(tab.id, tab.windowId);
     if (color) {
       console.log(`新しいタブ ${tab.id} にウィンドウ ${tab.windowId} の色 ${color} を適用`);
+      // タブに色を設定（新しいタブはウィンドウ色を継承）
+      colorManager.setTabColor(tab.id, color);
       // 複数のタイミングで適用を試行して確実に色を適用
       applyColorToTabWithRetry(tab.id, color);
     }
@@ -75,7 +91,7 @@ chrome.tabs.onCreated.addListener(async (tab) => {
 // タブが更新されたとき（ページ遷移など）
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (tab.windowId) {
-    const color = colorManager.getWindowColor(tab.windowId);
+    const color = colorManager.getEffectiveTabColor(tabId, tab.windowId);
     if (color) {
       // ページの読み込み状況に応じて色を適用
       if (changeInfo.status === 'loading') {
@@ -92,27 +108,53 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 // タブが別のウィンドウに移動されたとき（ドラッグアンドドロップ）
 chrome.tabs.onAttached.addListener(async (tabId, attachInfo) => {
   const windowId = attachInfo.newWindowId;
-  const color = colorManager.getWindowColor(windowId);
   
-  if (color) {
-    console.log(`タブ ${tabId} がウィンドウ ${windowId} に移動、色 ${color} を適用`);
-    // 少し遅延を入れてタブの移動が完了してから色を適用
-    setTimeout(() => {
-      applyColorToTab(tabId, color);
-    }, 200);
-  } else {
-    // 移動先のウィンドウに色設定がない場合は、色バーを削除
-    console.log(`タブ ${tabId} がウィンドウ ${windowId} に移動、色設定なし - 色バーを削除`);
-    setTimeout(() => {
-      removeColorFromTab(tabId);
-    }, 200);
-  }
+  // 移動先のウィンドウに他のタブが存在するかチェック
+  chrome.tabs.query({ windowId: windowId }, (tabs) => {
+    const isNewWindow = tabs.length === 1; // 移動してきたタブだけなら新しい独立ウィンドウ
+    
+    if (isNewWindow) {
+      // 独立したウィンドウになった場合：現在のタブ色を保持し、ウィンドウ色として設定
+      const currentTabColor = colorManager.getTabColor(tabId);
+      if (currentTabColor) {
+        console.log(`タブ ${tabId} が独立ウィンドウ ${windowId} になった、現在の色 ${currentTabColor} をウィンドウ色として設定`);
+        colorManager.setWindowColor(windowId, currentTabColor);
+        setTimeout(() => {
+          applyColorToTab(tabId, currentTabColor);
+        }, 200);
+      }
+    } else {
+      // 既存のウィンドウに移動した場合：移動先ウィンドウの色を適用
+      const windowColor = colorManager.getWindowColor(windowId);
+      if (windowColor) {
+        console.log(`タブ ${tabId} がウィンドウ ${windowId} に移動、ウィンドウの色 ${windowColor} を適用`);
+        colorManager.setTabColor(tabId, windowColor);
+        setTimeout(() => {
+          applyColorToTab(tabId, windowColor);
+        }, 200);
+      } else {
+        // 移動先のウィンドウに色設定がない場合は、タブの色も削除
+        console.log(`タブ ${tabId} がウィンドウ ${windowId} に移動、色設定なし - 色を削除`);
+        colorManager.removeTabColor(tabId);
+        setTimeout(() => {
+          removeColorFromTab(tabId);
+        }, 200);
+      }
+    }
+  });
 });
 
 // タブが別のウィンドウから切り離されたとき
 chrome.tabs.onDetached.addListener(async (tabId, detachInfo) => {
   console.log(`タブ ${tabId} がウィンドウ ${detachInfo.oldWindowId} から切り離された`);
-  // 切り離し時は特に何もしない（onAttachedで新しいウィンドウの色が適用される）
+  // デタッチ時は現在の色を保持（何もしない）
+  // onAttachedで適切な色が設定される
+});
+
+// タブが閉じられたときにタブ色をクリーンアップ
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+  console.log(`タブ ${tabId} が閉じられたためタブ色設定を削除`);
+  colorManager.removeTabColor(tabId);
 });
 
 // ウィンドウが閉じられたときに色設定をクリーンアップ
@@ -123,7 +165,7 @@ chrome.windows.onRemoved.addListener((windowId) => {
 
 // アクティブなタブが変更されたときも色を確認して適用
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  const color = colorManager.getWindowColor(activeInfo.windowId);
+  const color = colorManager.getEffectiveTabColor(activeInfo.tabId, activeInfo.windowId);
   if (color) {
     console.log(`アクティブタブ変更: タブ ${activeInfo.tabId} に色 ${color} を適用`);
     applyColorToTab(activeInfo.tabId, color);
@@ -213,9 +255,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'setWindowColor') {
     colorManager.setWindowColor(message.windowId, message.color);
     
-    // そのウィンドウの全タブに色を適用
+    // そのウィンドウの全タブに色を適用し、タブ色も更新
     chrome.tabs.query({ windowId: message.windowId }, (tabs) => {
       tabs.forEach(tab => {
+        colorManager.setTabColor(tab.id, message.color);
         applyColorToTab(tab.id, message.color);
       });
     });
@@ -224,22 +267,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === 'getWindowColor') {
     const color = colorManager.getWindowColor(message.windowId);
     sendResponse({ color: color });
+  } else if (message.action === 'getCurrentWindowEffectiveColor') {
+    // 現在のアクティブタブの実効的な色を取得
+    chrome.tabs.query({ active: true, windowId: message.windowId }, (tabs) => {
+      if (tabs.length > 0) {
+        const effectiveColor = colorManager.getEffectiveTabColor(tabs[0].id, message.windowId);
+        sendResponse({ color: effectiveColor });
+      } else {
+        sendResponse({ color: null });
+      }
+    });
+    return true; // 非同期レスポンス
   } else if (message.action === 'removeWindowColor') {
     colorManager.removeWindowColor(message.windowId);
     
-    // そのウィンドウの全タブから色を削除
+    // そのウィンドウの全タブから色を削除（タブ色もクリア）
     chrome.tabs.query({ windowId: message.windowId }, (tabs) => {
       tabs.forEach(tab => {
+        colorManager.removeTabColor(tab.id);
         removeColorFromTab(tab.id);
       });
     });
     
-    sendResponse({ success: true });
-  } else if (message.action === 'getColorHistory') {
-    const history = colorManager.getColorHistory();
-    sendResponse({ history: history });
-  } else if (message.action === 'clearColorHistory') {
-    colorManager.clearColorHistory();
     sendResponse({ success: true });
   }
   

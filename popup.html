@@ -8,55 +8,17 @@
 </head>
 <body>
   <div class="container">
-    <h1>🎨 ウィンドウカラー設定</h1>
-    
-    <div class="current-window">
-      <h2>現在のウィンドウ</h2>
-      <p class="window-info">ウィンドウ ID: <span id="windowId">-</span></p>
-      
-      <div class="current-color">
-        <label>現在の色:</label>
-        <div id="currentColorDisplay" class="color-display">未設定</div>
-      </div>
-    </div>
-
     <div class="color-selection">
-      <h3>色を選択:</h3>
       <div class="color-palette">
-        <div class="color-option" data-color="#FF6B6B" style="background: oklch(63.7% 0.237 25.331);" title="red"></div>
-        <div class="color-option" data-color="#4ECDC4" style="background: oklch(76.9% 0.188 70.08);" title="amber"></div>
-        <div class="color-option" data-color="#45B7D1" style="background: oklch(76.8% 0.233 130.85);" title="lime"></div>
-        <div class="color-option" data-color="#96CEB4" style="background: oklch(69.6% 0.17 162.48);" title="emerald"></div>
-        <div class="color-option" data-color="#FFEAA7" style="background: oklch(71.5% 0.143 215.221);" title="cyan"></div>
-        <div class="color-option" data-color="#DDA0DD" style="background: oklch(62.3% 0.214 259.815);" title="blue"></div>
-        <div class="color-option" data-color="#F8C471" style="background: oklch(60.6% 0.25 292.717);" title="violet"></div>
-        <div class="color-option" data-color="#85C1E9" style="background: oklch(66.7% 0.295 322.15);" title="fuchsia"></div>
-      </div>
-      
-      <div class="custom-color">
-        <label for="customColor">カスタム色:</label>
-        <input type="color" id="customColor" value="#FF6B6B">
-        <button id="applyCustom" class="btn btn-custom">適用</button>
-      </div>
+        <div class="color-option" data-color="oklch(63.7% 0.237 25.331)" style="background: oklch(63.7% 0.237 25.331);" title="red"></div>
+        <div class="color-option" data-color="oklch(76.9% 0.188 70.08)" style="background: oklch(76.9% 0.188 70.08);" title="amber"></div>
+        <div class="color-option" data-color="oklch(76.8% 0.233 130.85)" style="background: oklch(76.8% 0.233 130.85);" title="lime"></div>
+        <div class="color-option" data-color="oklch(69.6% 0.17 162.48)" style="background: oklch(69.6% 0.17 162.48);" title="emerald"></div>
+        <div class="color-option" data-color="oklch(71.5% 0.143 215.221)" style="background: oklch(71.5% 0.143 215.221);" title="cyan"></div>
+        <div class="color-option" data-color="oklch(62.3% 0.214 259.815)" style="background: oklch(62.3% 0.214 259.815);" title="blue"></div>
+        <div class="color-option" data-color="oklch(60.6% 0.25 292.717)" style="background: oklch(60.6% 0.25 292.717);" title="violet"></div>
+        <div class="color-option" data-color="oklch(66.7% 0.295 322.15)" style="background: oklch(66.7% 0.295 322.15);" title="fuchsia"></div>
     </div>
-
-    <div id="colorHistory" class="color-history">
-      <h3>以前に使用した色: <button id="clearHistory" class="btn-clear-history">クリア</button></h3>
-      <div id="historyPalette" class="history-palette">
-        <p class="no-history">まだ使用履歴がありません</p>
-      </div>
-    </div>
-
-    <div class="actions">
-      <button id="removeColor" class="btn btn-remove">色を削除</button>
-      <button id="previewMode" class="btn btn-preview">プレビューモード</button>
-    </div>
-
-    <div class="info">
-      <p><small>💡 このウィンドウの全てのタブに色が適用されます</small></p>
-    </div>
-  </div>
-
   <script src="popup.js"></script>
 </body>
 </html>
