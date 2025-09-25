@@ -24,7 +24,7 @@ class PopupManager {
   async loadCurrentColor() {
     try {
       const response = await chrome.runtime.sendMessage({
-        action: 'getCurrentWindowEffectiveColor',
+        action: 'getCurrentWindowColor',
         windowId: this.currentWindowId
       });
       this.currentColor = response.color;
@@ -53,6 +53,11 @@ class PopupManager {
 
     document.getElementById('removeColor').addEventListener('click', async () => {
       await this.removeColor();
+    });
+
+    // 設定ボタンのイベントリスナー
+    document.getElementById('settingsButton').addEventListener('click', () => {
+      this.openExtensionSettings();
     });
   }
 
@@ -83,6 +88,15 @@ class PopupManager {
     } catch (error) {
       console.error('色削除エラー:', error);
     }
+  }
+
+  openExtensionSettings() {
+    // 拡張機能の管理ページを開く
+    chrome.tabs.create({
+      url: `chrome://extensions/?id=${chrome.runtime.id}`
+    });
+    // ポップアップを閉じる
+    window.close();
   }
 }
 
