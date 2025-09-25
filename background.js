@@ -2,14 +2,18 @@
 class WindowColorManager {
   constructor() {
     this.windowColors = new Map();
+    this.colorHistory = new Set(); // 使用した色の履歴
     this.loadStoredColors();
   }
 
   async loadStoredColors() {
     try {
-      const result = await chrome.storage.local.get('windowColors');
+      const result = await chrome.storage.local.get(['windowColors', 'colorHistory']);
       if (result.windowColors) {
         this.windowColors = new Map(Object.entries(result.windowColors));
+      }
+      if (result.colorHistory) {
+        this.colorHistory = new Set(result.colorHistory);
       }
     } catch (error) {
       console.log('色設定の読み込みエラー:', error);
@@ -19,7 +23,11 @@ class WindowColorManager {
   async saveColors() {
     try {
       const colorsObj = Object.fromEntries(this.windowColors);
-      await chrome.storage.local.set({ windowColors: colorsObj });
+      const historyArray = Array.from(this.colorHistory);
+      await chrome.storage.local.set({ 
+        windowColors: colorsObj,
+        colorHistory: historyArray
+      });
     } catch (error) {
       console.log('色設定の保存エラー:', error);
     }
@@ -27,6 +35,7 @@ class WindowColorManager {
 
   setWindowColor(windowId, color) {
     this.windowColors.set(windowId.toString(), color);
+    this.colorHistory.add(color); // 色履歴に追加
     this.saveColors();
   }
 
@@ -36,6 +45,15 @@ class WindowColorManager {
 
   removeWindowColor(windowId) {
     this.windowColors.delete(windowId.toString());
+    this.saveColors();
+  }
+
+  getColorHistory() {
+    return Array.from(this.colorHistory);
+  }
+
+  clearColorHistory() {
+    this.colorHistory.clear();
     this.saveColors();
   }
 }
@@ -216,6 +234,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     });
     
+    sendResponse({ success: true });
+  } else if (message.action === 'getColorHistory') {
+    const history = colorManager.getColorHistory();
+    sendResponse({ history: history });
+  } else if (message.action === 'clearColorHistory') {
+    colorManager.clearColorHistory();
     sendResponse({ success: true });
   }
   
